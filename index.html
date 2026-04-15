@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23f7a000'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white'%3E🐺%3C/text%3E%3C/svg%3E" type="image/x-icon">
+  <title>Ну, погоди! — Мобильная версия</title>
+  <style>
+    /* ===== RESET & GLOBAL ===== */
+    * {
+      padding: 0;
+      margin: 0;
+      border: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      touch-action: pan-x pan-y; /* разрешаем скролл только по необходимости, но не зумим */
+    }
+
+    body {
+      font-family: 'Conv_BeeskneesC', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJhIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSgzMCkiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjgiIGZpbGw9IiNlM2M5YzUiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMyMjZmMjgiLz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2EpIiBvcGFjaXR5PSIwLjMiLz48L3N2Zz4=') center/cover no-repeat;
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      touch-action: pan-y; /* предотвращаем случайное перетаскивание по горизонтали */
+    }
+
+    /* затемнение для лучшей читаемости */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* контейнер игры — резиновый */
+    #game {
+      display: block;
+      width: 100%;
+      max-width: 1000px;
+      height: auto;
+      aspect-ratio: 1000 / 600;
+      position: relative;
+      margin: 10px auto;
+      background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM1ZGI4MzMiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMzNWE4MjAiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2cpIi8+PC9zdmc+') no-repeat center/cover;
+      border: 2px solid #2c2c2c;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+      z-index: 2;
+    }
+
+    /* мобильные контролы */
+    .touch-controls {
+      position: fixed;
+      bottom: 15px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      z-index: 100;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      padding: 10px 20px;
+      border-radius: 60px;
+      width: fit-content;
+      margin: 0 auto;
+      pointer-events: auto;
+      border: 1px solid rgba(255,215,0,0.6);
+    }
+
+    .ctrl-btn {
+      background: rgba(0,0,0,0.7);
+      border: 2px solid #f7a000;
+      border-radius: 60px;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+      font-weight: bold;
+      color: #ffd966;
+      box-shadow: 0 5px 0 #6b3e00;
+      transition: all 0.05s linear;
+      touch-action: manipulation;
+      cursor: pointer;
+      background: #2b1e0e;
+    }
+
+    .ctrl-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #6b3e00;
+    }
+
+    .pause-mobile {
+      background: #7a2e2e;
+      border-color: #ffaa55;
+      font-size: 32px;
+    }
+
+    /* адаптация для маленьких экранов */
+    @media (max-width: 700px) {
+      .ctrl-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 32px;
+      }
+      .touch-controls {
+        gap: 12px;
+        padding: 8px 16px;
+        bottom: 10px;
+      }
+    }
+
+    @media (max-width: 550px) {
+      .ctrl-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+      }
+    }
+
+    /* стили текста (очки, таймер) — чуть меньше на мобиле */
+    #score, #timer {
+      font-size: clamp(22px, 6vw, 40px);
+      background: rgba(0,0,0,0.5);
+      padding: 4px 12px;
+      border-radius: 40px;
+      backdrop-filter: blur(4px);
+    }
+    #score {
+      margin-left: 10px;
+    }
+    #timer {
+      left: auto;
+      right: auto;
+      transform: translateX(0);
+      margin-left: 20px;
+    }
+    #lifes img {
+      width: clamp(28px, 7vw, 42px);
+    }
+    .pause {
+      font-size: clamp(24px, 7vw, 42px);
+      bottom: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      background: rgba(0,0,0,0.7);
+      padding: 8px 24px;
+      border-radius: 50px;
+      z-index: 200;
+    }
+    /* старт/конец */
+    #start, #end {
+      background-size: 25%, 20%, 45%;
+      background-position: right 80% center, left 20% bottom, center 15%;
+      padding-top: 25%;
+    }
+    #start-btn, #restart-btn {
+      font-size: clamp(18px, 5vw, 26px);
+      padding: 12px 20px;
+    }
+    .rules, #sound {
+      z-index: 60;
+    }
+    .info-body {
+      width: 85%;
+      max-width: 300px;
+      font-size: 13px;
+    }
+  </style>
+  <link rel="stylesheet" type="text/css" href="style/style.css" />
+</head>
+<body>
+<div class="bg"></div>
+<div id="game"></div>
+
+<!-- мобильные кнопки управления (будут показаны только после старта игры) -->
+<div class="touch-controls" id="mobileControls" style="display: none;">
+  <div class="ctrl-btn" id="mobileUp">▲</div>
+  <div class="ctrl-btn" id="mobileDown">▼</div>
+  <div class="ctrl-btn" id="mobileLeft">◀</div>
+  <div class="ctrl-btn" id="mobileRight">▶</div>
+  <div class="ctrl-btn pause-mobile" id="mobilePause">⏸</div>
+</div>
+
+<script>
+  // ======================== ОСНОВНЫЕ ПЕРЕМЕННЫЕ (совместимость с оригиналом) =====================
+  let game = document.querySelector("#game");
+  let startGame = null, startBtn = null, soundBtn = null, score = null, audio = null, song = null;
+  let gameScore = 0, timer = null, time = null, life = null, quantityLifes = 3;
+  let hens = null, leftTop = null, rightTop = null, leftBottom = null, rightBottom = null;
+  let egg = null, endBlock = null, restartBtn = null;
+  let varSoung = "on";
+  let pauseBlock = null, t = null;
+  // для яиц
+  let speedAnimal = 200, speedEgg = 3000;
+  let ballTopLeft = "egg-left-top", ballBottomLeft = "egg-left-bottom";
+  let ballTopRight = "egg-right-top", ballBottomRight = "egg-right-bottom";
+  let pxLeft = 410, pxRight = 550, pxLeftCreate = 400, pxRightCreate = 570;
+  let music = null, sound = null;
+  let pause = 0;
+  let timerEgg = null, timerBall = null;
+  let maxScore = 0;
+  let wolf = null;
+
+  // вспомогательные функции для имитации файлов
+  function createAudio(src, vol) { let a = new Audio(); a.src = src; a.volume = vol; return a; }
+  music = createAudio('', 0.7);
+  sound = createAudio('', 0.3);
+
+  // переопределяем пути (если реальные файлы недоступны, используем Web Audio заглушки, но логика сохранится)
+  function initAudioFallback() {
+    try {
+      music = new Audio();
+      music.src = "audio/click.mp3";
+      music.volume = 0.7;
+      sound = new Audio();
+      sound.src = "audio/egg.mp3";
+      sound.volume = 0.3;
+    } catch(e) { console.log("audio not critical"); }
+  }
+
+  // ======================== АДАПТИВНЫЕ ФУНКЦИИ (сенсор) ====================
+  function attachMobileControls() {
+    const ctrlDiv = document.getElementById('mobileControls');
+    if(!ctrlDiv) return;
+    ctrlDiv.style.display = 'flex';
+
+    const upBtn = document.getElementById('mobileUp');
+    const downBtn = document.getElementById('mobileDown');
+    const leftBtn = document.getElementById('mobileLeft');
+    const rightBtn = document.getElementById('mobileRight');
+    const pauseBtn = document.getElementById('mobilePause');
+
+    if(upBtn) upBtn.addEventListener('click', (e) => { e.preventDefault(); emulateKey(38); });
+    if(downBtn) downBtn.addEventListener('click', (e) => { e.preventDefault(); emulateKey(40); });
+    if(leftBtn) leftBtn.addEventListener('click', (e) => { e.preventDefault(); emulateKey(37); });
+    if(rightBtn) rightBtn.addEventListener('click', (e) => { e.preventDefault(); emulateKey(39); });
+    if(pauseBtn) pauseBtn.addEventListener('click', (e) => { e.preventDefault(); emulateKey(32); });
+  }
+
+  function emulateKey(keyCode) {
+    let eventObj = { keyCode: keyCode, which: keyCode };
+    if(typeof checkKey === 'function') checkKey(eventObj);
+  }
+
+  function hideMobileControls() { 
+    let ctrl = document.getElementById('mobileControls'); 
+    if(ctrl) ctrl.style.display = 'none'; 
+  }
+  function showMobileControls() { 
+    let ctrl = document.getElementById('mobileControls'); 
+    if(ctrl && !document.getElementById('start') && !document.getElementById('end')) ctrl.style.display = 'flex'; 
+    else if(ctrl && (document.getElementById('start') || document.getElementById('end'))) ctrl.style.display = 'none';
+  }
+
+  // ========== ПЕРЕОПРЕДЕЛЕНИЕ НЕКОТОРЫХ ФУНКЦИЙ ДЛЯ ИНТЕГРАЦИИ (чтобы работало с мобильным view) ==========
+  // Копируем глобальные функции из оригинальных файлов, но чтобы не потерять — внедряем через eval? Нет, лучше переиспользуем.
+  // Поскольку style.css и другие скрипты загружены, мы ДОПОЛНЯЕМ а не заменяем.
+  // Но в html мы уже подключаем style.css, а скрипты variable, function, createEgg, main — они есть? В исходном коде они подключаются.
+  // Для чистоты ответа, чтобы игра точно работала на телефоне, вставим полный функционал в этом ответе (объединим ключевые моменты).
+  // Однако я замечу: оригинальные файлы подключаются, но мы добавим свои коррекции.
+  
+  // чтобы избежать конфликтов, проверяем существует ли уже createGame, если нет — определяем всё заново. Но для совместимости используем существующий код.
+  // Проблема: в этом изолированном ответе мы не имеем загруженных js/variable.js и прочих. Поэтому предоставлю ПОЛНУЮ версию игры со всем функционалом + мобильные кнопки.
+  // Ниже — полный движок, адаптированный под touch и отзывчивый дизайн.
+  
+  // ************ ПОЛНАЯ ЛОГИКА ИГРЫ (объединённая) ************
+  
+  function createStartGameBlock(){
+    if(document.getElementById('start')) return;
+    startBlock = document.createElement("div");
+    startBlock.id = "start";
+    startBtn = document.createElement("button");
+    startBtn.id = "start-btn";
+    startBtn.innerHTML = "Н<span>а</span><span>ч</span><span>а</span><span>т</span><span>ь</span><span>!</span>";
+    startBlock.appendChild(startBtn);
+    game.appendChild(startBlock);
+    startBtn.onclick = () => { createGame(); };
+  }
+  
+  function createRules(){
+    if(document.querySelector('.rules')) return;
+    var rules = document.createElement("div");
+    rules.className = "rules";
+    game.appendChild(rules);
+    var openRule = document.createElement("a");
+    openRule.innerText = "i";
+    openRule.href = "#info";
+    rules.appendChild(openRule);
+    var information = document.createElement("div");
+    information.id = "info";
+    information.className = "info-body";
+    rules.appendChild(information);
+    var closeRule = document.createElement("a");
+    closeRule.innerText = "X";
+    closeRule.href = "#";
+    closeRule.className = "close-rules";
+    information.appendChild(closeRule);
+    var par1 = document.createElement("p"); par1.innerText = "Волк ловит яйца. Управление стрелками / кнопки на экране."; information.appendChild(par1);
+    var par3 = document.createElement("p"); par3.innerText = "Жёлтые +1 очко, зелёные +5 сек, красные -1 жизнь."; information.appendChild(par3);
+    var par5 = document.createElement("p"); par5.innerText = "Потеря 3 яиц или время = 0 → конец игры. Пробел / кнопка паузы."; information.appendChild(par5);
+  }
+  
+  function createSoundBlock(){
+    if(document.getElementById('sound')) return;
+    soundBtn = document.createElement("div");
+    soundBtn.id = "sound";
+    soundBtn.style.background = "url('img/sound.svg') center/ 70% no-repeat";
+    game.appendChild(soundBtn);
+    soundBtn.onclick = () => onOffMusic();
+  }
+  
+  function createScore(){
+    score = document.createElement("div");
+    score.id = "score";
+    score.innerText = gameScore;
+    game.appendChild(score);
+  }
+  function createTimer(){
+    timer = document.createElement("div");
+    timer.innerText = "Время: ";
+    timer.id = "timer";
+    game.appendChild(timer);
+    time = document.createElement("span");
+    time.innerText = "60";
+    time.id = "time";
+    timer.appendChild(time);
+  }
+  function createLifes(){
+    life = document.createElement("div");
+    life.id = "lifes";
+    game.prepend(life);
+    if(quantityLifes <= 0) { gameEnd(); return; }
+    for(let i=0; i<quantityLifes; i++){
+      var lifeImage = document.createElement("img");
+      lifeImage.src = "img/live.svg";
+      life.appendChild(lifeImage);
+    }
+  }
+  function deleteLifes(){ if(life) life.remove(); }
+  function createWolf(){
+    wolf = document.createElement("div");
+    wolf.id = "wolf";
+    wolf.className = "wolf-left-top";
+    game.appendChild(wolf);
+  }
+  function createHens(){
+    hens = document.createElement("div");
+    hens.id = "hens";
+    game.appendChild(hens);
+    createLeftTopHen(); createRightTopHen(); createLeftBottomHen(); createRightBottomHen();
+  }
+  function createLeftTopHen(){
+    leftTop = document.createElement("div"); leftTop.id = "left-top"; hens.appendChild(leftTop);
+    var board = document.createElement("div"); board.className = "board board-left-top"; leftTop.appendChild(board);
+    var boardDeg = document.createElement("div"); boardDeg.className = "down-board down-board-left-top"; leftTop.appendChild(boardDeg);
+    var hen = document.createElement("img"); hen.className = "hen hen-left-top"; hen.src = "img/hen.png"; leftTop.appendChild(hen);
+    leftTop.onmouseover = () => { if(wolf) wolf.className = "wolf-left-top"; };
+    leftTop.addEventListener('touchstart', (e) => { e.preventDefault(); if(wolf) wolf.className = "wolf-left-top"; });
+  }
+  function createRightTopHen(){
+    rightTop = document.createElement("div"); rightTop.id = "right-top"; hens.appendChild(rightTop);
+    var board = document.createElement("div"); board.className = "board board-right-top"; rightTop.appendChild(board);
+    var boardDeg = document.createElement("div"); boardDeg.className = "down-board down-board-right-top"; rightTop.appendChild(boardDeg);
+    var hen = document.createElement("img"); hen.className = "hen hen-right-top"; hen.src = "img/hen.png"; rightTop.appendChild(hen);
+    rightTop.onmouseover = () => { if(wolf) wolf.className = "wolf-right-top"; };
+    rightTop.addEventListener('touchstart', (e) => { e.preventDefault(); if(wolf) wolf.className = "wolf-right-top"; });
+  }
+  function createLeftBottomHen(){
+    leftBottom = document.createElement("div"); leftBottom.id = "left-bottom"; hens.appendChild(leftBottom);
+    var board = document.createElement("div"); board.className = "board board-left-bottom"; leftBottom.appendChild(board);
+    var boardDeg = document.createElement("div"); boardDeg.className = "down-board down-board-left-bottom"; leftBottom.appendChild(boardDeg);
+    var hen = document.createElement("img"); hen.className = "hen hen-left-bottom"; hen.src = "img/hen.png"; leftBottom.appendChild(hen);
+    leftBottom.onmouseover = () => { if(wolf) wolf.className = "wolf-left-bottom"; };
+    leftBottom.addEventListener('touchstart', (e) => { e.preventDefault(); if(wolf) wolf.className = "wolf-left-bottom"; });
+  }
+  function createRightBottomHen(){
+    rightBottom = document.createElement("div"); rightBottom.id = "right-bottom"; hens.appendChild(rightBottom);
+    var board = document.createElement("div"); board.className = "board board-right-bottom"; rightBottom.appendChild(board);
+    var boardDeg = document.createElement("div"); boardDeg.className = "down-board down-board-right-bottom"; rightBottom.appendChild(boardDeg);
+    var hen = document.createElement("img"); hen.className = "hen hen-right-bottom"; hen.src = "img/hen.png"; rightBottom.appendChild(hen);
+    rightBottom.onmouseover = () => { if(wolf) wolf.className = "wolf-right-bottom"; };
+    rightBottom.addEventListener('touchstart', (e) => { e.preventDefault(); if(wolf) wolf.className = "wolf-right-bottom"; });
+  }
+  
+  function deleteScore(){ if(score) score.remove(); }
+  function deleteTimer(){ if(timer) timer.remove(); if(t) clearInterval(t); if(timerBall) clearInterval(timerBall); if(timerEgg) clearTimeout(timerEgg); }
+  function deleteWolf(){ if(wolf) wolf.remove(); }
+  function deleteHen(){ if(hens) hens.remove(); }
+  function deleteEndGameBlock(){ if(endBlock) endBlock.remove(); }
+  function recountVariables(){ gameScore=0; quantityLifes=3; speedAnimal=200; speedEgg=3000; pause=0; if(pauseBlock) pauseBlock.remove(); }
+  function gameFild(){ while(game.firstChild) game.removeChild(game.firstChild); }
+  
+  function musicOn(songPath){
+    if(audio) audio.pause();
+    audio = new Audio(); audio.src = songPath; audio.loop = true; audio.volume = 0.15;
+    if(varSoung === "on") audio.play().catch(e=>console.log);
+  }
+  function musicOff(){ if(audio){ audio.pause(); audio = null; } }
+  function onOffMusic(){
+    if(varSoung === "on"){ varSoung="off"; if(audio) audio.pause(); if(soundBtn) soundBtn.style.background = "url('img/sound.svg') center/ 70% no-repeat, red"; }
+    else{ varSoung="on"; if(audio) audio.play().catch(e=>console.log); if(soundBtn) soundBtn.style.background = "url('img/sound.svg') center/ 70% no-repeat"; }
+  }
+  
+  function random(max){ return Math.floor(Math.random()*(max+1))+1; }
+  let activeInterval = null;
+  function randomPozition(){ let color=random(2); let r=random(4); if(r===1) createBall(ballTopLeft,color); else if(r===2) createBall(ballBottomLeft,color); else if(r===3) createBall(ballTopRight,color); else createBall(ballBottomRight,color); }
+  function createBall(pozEgg, colorEgg){
+    if(pause===1) return;
+    var ball = document.createElement("div"); ball.id="egg"; ball.className=pozEgg;
+    if(colorEgg===1){ ball.style.boxShadow="inset 0px -20px 30px -15px rgb(253,212,30)"; ball.style.border="1px solid #f7a000"; }
+    else if(colorEgg===2){ ball.style.boxShadow="inset 0px -20px 30px -15px rgb(50,223,15)"; ball.style.border="1px solid rgb(50,223,15)"; }
+    else{ ball.style.boxShadow="inset 0px -20px 30px -15px rgb(223,15,15)"; ball.style.border="1px solid rgb(223,15,15)"; }
+    game.appendChild(ball);
+    let total=0, isFall=0;
+    let fallTimer = setInterval(()=>{
+      if(pause===1) return;
+      if(ball.className.includes("left")){ ball.style.top = (ball.offsetTop+3)+"px"; ball.style.left = (ball.offsetLeft+10)+"px"; total+=45; }
+      else{ ball.style.top = (ball.offsetTop+3)+"px"; ball.style.left = (ball.offsetLeft-10)+"px"; total-=45; }
+      ball.style.transform = "rotate("+total+"deg)";
+      let atLeft = (ball.offsetLeft>=pxLeft && ball.offsetLeft<=pxLeft+10);
+      let atRight = (ball.offsetLeft>=pxRight && ball.offsetLeft<=pxRight+10);
+      if(atLeft || atRight){
+        let caught=false;
+        if(wolf && ((wolf.className==="wolf-left-top" && ball.className===ballTopLeft) ||
+            (wolf.className==="wolf-left-bottom" && ball.className===ballBottomLeft) ||
+            (wolf.className==="wolf-right-top" && ball.className===ballTopRight) ||
+            (wolf.className==="wolf-right-bottom" && ball.className===ballBottomRight))) caught=true;
+        if(caught){
+          if(music) { let m = new Audio(); m.src="audio/click.mp3"; m.volume=0.7; m.play().catch(e=>{}); }
+          if(colorEgg===1){ gameScore++; if(score) score.innerText=gameScore; if(gameScore%20===0 && gameScore!==0){ quantityLifes++; deleteLifes(); createLifes(); let chk=document.createElement("div"); chk.id="chicken"; game.appendChild(chk); setTimeout(()=>chk.remove(),500); } }
+          else if(colorEgg===2){ if(time) time.innerText = (+time.innerText)+5; }
+          else if(colorEgg===3){ quantityLifes--; deleteLifes(); if(quantityLifes>0) createLifes(); else gameEnd(); }
+          ball.remove(); clearInterval(fallTimer);
+        } else {
+          if(isFall!==1 && colorEgg!==3) quantityLifes--;
+          isFall=1;
+          let fallDown = setInterval(()=>{
+            if(!ball.parentNode){ clearInterval(fallDown); return; }
+            ball.style.top = ball.offsetTop+5+"px";
+            if(ball.offsetTop>=500){
+              clearInterval(fallDown); ball.remove();
+              deleteLifes(); if(quantityLifes>0) createLifes(); else gameEnd();
+              let br = document.createElement("div"); br.className = ball.className.includes("left")?"broken-egg-left":"broken-egg-right"; game.appendChild(br);
+              setTimeout(()=>br.remove(),700);
+            }
+          },20);
+          clearInterval(fallTimer);
+        }
+      }
+    }, speedAnimal);
+  }
+  
+  function startPauseGen(){
+    if(timerEgg) clearTimeout(timerEgg);
+    timerEgg = setTimeout(function gen(){
+      if(pause===0 && !document.getElementById('end') && !document.getElementById('start')){
+        randomPozition();
+        if(speedEgg>700) speedEgg-=100;
+        if(speedAnimal>80) speedAnimal-=2;
+        timerEgg = setTimeout(gen, speedEgg);
+      } else timerEgg = setTimeout(gen, 500);
+    }, speedEgg);
+  }
+  
+  function startTimerGame(){
+    t = setInterval(()=>{ if(pause===0 && time && !document.getElementById('end')){ time.innerText = Math.max(0, +time.innerText-1); if(+time.innerText===0) gameEnd(); } },1000);
+  }
+  
+  function checkKey(e){
+    let key = e.keyCode;
+    if(key===32){ if(pause===0){ pause=1; pauseBlock=document.createElement("div"); pauseBlock.className="pause"; pauseBlock.innerText="ПАУЗА"; game.appendChild(pauseBlock); } else { pause=0; if(pauseBlock) pauseBlock.remove(); startPauseGen(); } }
+    if(!wolf) return;
+    if(key===38){ if(wolf.className==="wolf-left-bottom") wolf.className="wolf-left-top"; else if(wolf.className==="wolf-right-bottom") wolf.className="wolf-right-top"; }
+    if(key===40){ if(wolf.className==="wolf-left-top") wolf.className="wolf-left-bottom"; else if(wolf.className==="wolf-right-top") wolf.className="wolf-right-bottom"; }
+    if(key===37){ if(wolf.className==="wolf-right-top") wolf.className="wolf-left-top"; else if(wolf.className==="wolf-right-bottom") wolf.className="wolf-left-bottom"; }
+    if(key===39){ if(wolf.className==="wolf-left-top") wolf.className="wolf-right-top"; else if(wolf.className==="wolf-left-bottom") wolf.className="wolf-right-bottom"; }
+  }
+  
+  function createEndGameBlock(){
+    endBlock = document.createElement("div"); endBlock.id = "end";
+    game.appendChild(endBlock);
+    let p1 = document.createElement("p"); p1.innerText="Игра окончена!"; endBlock.appendChild(p1);
+    let p2 = document.createElement("p"); p2.innerText="Ваш счет: "; let sp=document.createElement("span"); sp.innerText=gameScore; p2.appendChild(sp); endBlock.appendChild(p2);
+    if(gameScore>maxScore) maxScore=gameScore;
+    let rec = document.createElement("p"); rec.innerText="Рекорд: "+maxScore; endBlock.appendChild(rec);
+    restartBtn = document.createElement("button"); restartBtn.id="restart-btn"; restartBtn.innerHTML="З<span>а</span><span>н</span><span>о</span><span>в</span><span>о</span><span>!</span>";
+    endBlock.appendChild(restartBtn);
+    restartBtn.onclick = restartGame;
+  }
+  
+  function deleteStartBlock(){ let sb=document.getElementById('start'); if(sb) sb.remove(); }
+  function createGame(){
+    if(document.getElementById('start')) deleteStartBlock();
+    if(document.getElementById('end')) deleteEndGameBlock();
+    gameFild();
+    musicOn("audio/pole.mp3");
+    createScore(); createTimer(); createLifes(); createWolf(); createHens(); createRules(); createSoundBlock();
+    startTimerGame();
+    startPauseGen();
+    document.onkeydown = checkKey;
+    showMobileControls();
+    attachMobileControls();
+    pause=0; if(pauseBlock) pauseBlock.remove();
+  }
+  
+  function gameEnd(){
+    if(t) clearInterval(t); if(timerEgg) clearTimeout(timerEgg);
+    musicOff();
+    deleteScore(); deleteTimer(); deleteLifes(); deleteWolf(); deleteHen();
+    gameFild();
+    createRules(); createSoundBlock();
+    musicOn("audio/end.mp3");
+    createEndGameBlock();
+    hideMobileControls();
+  }
+  
+  function restartGame(){
+    musicOff();
+    recountVariables();
+    gameEnd();
+    setTimeout(()=>{
+      deleteEndGameBlock();
+      gameFild();
+      createGame();
+    },50);
+  }
+  
+  function start(){
+    createStartGameBlock();
+    createRules();
+    createSoundBlock();
+    startBtn.onclick = () => createGame();
+    hideMobileControls();
+  }
+  
+  window.onload = () => {
+    initAudioFallback();
+    start();
+  };
+</script>
+</body>
+</html>
